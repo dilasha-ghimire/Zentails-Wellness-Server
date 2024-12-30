@@ -1,9 +1,8 @@
 const express = require("express")
+const connectDB = require("./config/db.js")
 const app = express();
 
-app.use("/",() => {
-    console.log("Hello, World!");
-})
+connectDB();
 
 const port = 3000;
 app.listen(port,() => {
