@@ -47,8 +47,8 @@ const updateById = async (req, res) => {
   try {
     const customers = await Customer.findByIdAndUpdate(
       req.params.id, // ID of the customer to update.
-      req.body,      // New data to update the customer with.
-      { new: true }  // Return the updated document after applying the changes.
+      req.body, // New data to update the customer with.
+      { new: true } // Return the updated document after applying the changes.
     );
     res.status(201).json(customers); // Respond with the updated data and a 201 Created status code.
   } catch (e) {
