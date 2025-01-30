@@ -11,12 +11,14 @@ const {
   updateById,
 } = require("../controllers/customerController");
 
+const CustomerValidation = require("../validation/customerValidation");
+
 // Define a route to get all customers.
 router.get("/", findAll);
 // HTTP GET request to "/" triggers the `findAll` function to fetch all customer records.
 
 // Define a route to save a new customer.
-router.post("/", save);
+router.post("/", CustomerValidation, save);
 // HTTP POST request to "/" triggers the `save` function to create a new customer record.
 
 // Define a route to fetch a customer by ID.

@@ -8,6 +8,8 @@ const connectDB = require("./config/db.js");
 const CustomerRouter = require("./routes/customerRoute");
 const PetRouter = require("./routes/petRoute");
 
+const AuthRouter = require("./routes/authRoute");
+
 // Create an instance of the Express application.
 const app = express();
 
@@ -21,6 +23,8 @@ app.use(express.json());
 app.use("/api/customer", CustomerRouter);
 app.use("/api/pet", PetRouter);
 
+app.use("/api/auth", AuthRouter);
+
 // Define the port number the server will listen on.
 const port = 3000;
 
@@ -29,3 +33,5 @@ app.listen(port, () => {
   // Log a message when the server starts successfully.
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+// 44 minutes - image starts

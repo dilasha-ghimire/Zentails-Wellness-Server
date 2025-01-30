@@ -7,7 +7,7 @@ const petSchema = new mongoose.Schema({
     required: true, // Pet name is required
   },
   age: {
-    type: Number, // Pet age is a number field
+    type: String, // Pet age is a String field
     required: true, // Pet age is required
   },
   breed: {
@@ -23,8 +23,12 @@ const petSchema = new mongoose.Schema({
     required: true, // Availability is required
   },
   charge_per_hour: {
-    type: Number, // Charge per hour is a number field
+    type: String, // Charge per hour is a string field
     required: true, // Charge per hour is required
+  },
+  image: {
+    type: String, // Image is a string field as the name of image gets saved in the database
+    required: false, // Image is not required
   },
 });
 

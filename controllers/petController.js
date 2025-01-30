@@ -13,7 +13,17 @@ const findAll = async (req, res) => {
 // Save a new pet
 const save = async (req, res) => {
   try {
-    const pets = new Pet(req.body);
+    const { name, age, breed, description, availability, charge_per_hour } =
+      req.body;
+    const pets = new Pet({
+      name,
+      age,
+      breed,
+      description,
+      availability,
+      charge_per_hour,
+      image: req.file.originalname,
+    });
     await pets.save();
     res.status(201).json(pets); // 201 Created
   } catch (e) {
