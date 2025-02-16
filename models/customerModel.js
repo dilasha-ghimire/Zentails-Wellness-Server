@@ -16,6 +16,7 @@ const customerSchema = new mongoose.Schema({
   },
   contact_number: {
     type: String,
+    unique: true,
     required: true,
     // 'contact_number' is a string field and is mandatory.
   },
@@ -23,6 +24,10 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true,
     // 'address' is a string field and is mandatory.
+  },
+  profilePicture: {
+    type: String,
+    default: null,
   },
 });
 

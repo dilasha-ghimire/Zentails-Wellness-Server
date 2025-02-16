@@ -1,6 +1,7 @@
 // Import Express and create a router instance to define routes for the "customers" API.
 const express = require("express");
 const router = express.Router();
+const upload = require("./../utils/upload");
 
 // Import controller functions from the "customerController" file to handle route logic.
 const {
@@ -9,6 +10,7 @@ const {
   findById,
   deleteById,
   updateById,
+  uploadImage,
 } = require("../controllers/customerController");
 
 const CustomerValidation = require("../validation/customerValidation");
@@ -32,6 +34,8 @@ router.delete("/:id", deleteById);
 // Define a route to update a customer by ID.
 router.put("/:id", updateById);
 // HTTP PUT request to "/:id" triggers the `updateById` function to update a customer by their ID.
+
+router.post("/uploadImage", upload, uploadImage);
 
 module.exports = router;
 // Export the router so it can be used in other parts of the application.
