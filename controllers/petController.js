@@ -13,19 +13,20 @@ const findAll = async (req, res) => {
 // Save a new pet
 const save = async (req, res) => {
   try {
-    const { name, age, breed, description, availability, charge_per_hour } =
-      req.body;
-    const pets = new Pet({
+    const { name, age, breed, description, availability, charge_per_hour, image } = req.body;
+
+    const pet = new Pet({
       name,
       age,
       breed,
       description,
       availability,
       charge_per_hour,
-      image: req.file.originalname,
+      image // Here you expect the image name from the client
     });
-    await pets.save();
-    res.status(201).json(pets); // 201 Created
+
+    await pet.save();
+    res.status(201).json(pet); // 201 Created
   } catch (e) {
     res.status(500).json({ error: e.message }); // 500 Internal Server Error
   }
@@ -63,10 +64,23 @@ const updateById = async (req, res) => {
   }
 };
 
+// Function to upload an image.
+const uploadImage = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).send({ message: "Please upload a file" });
+  }
+  // Optionally, add further checks here for file type or size.
+  res.status(200).json({
+    success: true,
+    data: req.file.filename,
+  });
+};
+
 module.exports = {
   findAll,
   save,
   findById,
   deleteById,
   updateById,
+  uploadImage,
 };

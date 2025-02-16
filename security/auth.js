@@ -1,11 +1,10 @@
 const jwt = require("jsonwebtoken");
-const SECRET_KEY =
-  "dc188b26fe49165c39fdecba3e1ad456ec220c369da48d07350ab18ee6c3af68";
+const SECRET_KEY = process.env.SECRET_KEY || "your-default-secret-key";
 
 function authenticateToken(req, res, next) {
-  const token = req.header("Authentication")?.split(" ")[1];
+  const token = req.headers("Authentication")?.split(" ")[1];
   if (!token) {
-    return res.status(401).send("Access denied: No token provided");
+    return res.status(401).json({ error: "Access denied: No token provided" });
   }
 
   try {
@@ -17,14 +16,14 @@ function authenticateToken(req, res, next) {
   }
 }
 
-function authorizeRole(role) {
+function authorizeRole(roles) {
   return (req, res, next) => {
-    if (req.user.role != role) {
-      return res.status(403).send("Access Denied: Insufficient Permissions");
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: "Access Denied: Insufficient Permissions" });
     }
-
     next();
   };
 }
+
 
 module.exports = { authenticateToken, authorizeRole };

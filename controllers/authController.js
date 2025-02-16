@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = "dc188b26fe49165c39fdecba3e1ad456ec220c369da48d07350ab18ee6c3af68"; 
+const SECRET_KEY = process.env.SECRET_KEY || "your-default-secret-key"; 
 const Customer = require("../models/customerModel"); // Customer data (name, email, contact, address)
 const Credential = require("../models/credentials"); // Authentication data (email, password, role)
 
