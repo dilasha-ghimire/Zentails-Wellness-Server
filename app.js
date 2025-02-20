@@ -3,11 +3,11 @@ const express = require("express");
 // Import the Express framework for creating a web server.
 const connectDB = require("./config/db.js");
 // Import the custom database connection function to connect to MongoDB.
+const path = require("path"); // Import the path module
 
 // Import router to handle routes operations.
 const CustomerRouter = require("./routes/customerRoute");
 const PetRouter = require("./routes/petRoute");
-
 const AuthRouter = require("./routes/authRoute");
 
 // Create an instance of the Express application.
@@ -18,6 +18,12 @@ connectDB();
 
 // Middleware to parse incoming JSON request bodies.
 app.use(express.json());
+
+// Serve static files from the "public/uploads/customers" directory
+app.use(
+  "/uploads/customers",
+  express.static(path.join(__dirname, "public/uploads/customers"))
+);
 
 // Mount the routes at the endpoints.
 app.use("/api/customer", CustomerRouter);
