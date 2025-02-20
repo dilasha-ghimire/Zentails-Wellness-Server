@@ -67,21 +67,36 @@ const deleteById = async (req, res) => {
 // Function to update a customer by their ID.
 const updateById = async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndUpdate(
-      req.params.id, // ID of the customer to update.
-      req.body, // New data to update the customer with.
-      { new: true } // Return the updated document after applying the changes.
-    );
-
+    // Find the existing customer
+    const customer = await Customer.findById(req.params.id);
     if (!customer) {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    res.status(200).json(customer); // Respond with the updated data and a 200 OK status code.
+    // Check if the email is being updated
+    const emailChanged = req.body.email && req.body.email !== customer.email;
+
+    // Update the customer
+    const updatedCustomer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true } // Return the updated document
+    );
+
+    // If email was updated, update the Credential table as well
+    if (emailChanged) {
+      await Credential.findOneAndUpdate(
+        { email: customer.email }, // Find by old email
+        { email: req.body.email } // Update with new email
+      );
+    }
+
+    res.status(200).json(updatedCustomer); // Respond with updated customer data
   } catch (e) {
-    res.status(500).json({ error: e.message }); // Respond with an error message and a 500 Internal Server Error status code.
+    res.status(500).json({ error: e.message });
   }
 };
+
 
 // Function to upload an image.
 const uploadImage = async (req, res, next) => {
