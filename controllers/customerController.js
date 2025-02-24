@@ -53,10 +53,10 @@ const deleteById = async (req, res) => {
     }
 
     // Delete the corresponding credential using the customer's email
-    await Credential.findOneAndDelete({ email: customer.email });
+    await Credential.deleteOne({ user_id: customer._id });
 
     // Now delete the customer
-    await Customer.findByIdAndDelete(req.params.id);
+    await Customer.deleteOne({ _id: req.params.id });
 
     res.status(200).json("Customer and corresponding credential deleted"); // Respond with a success message and a 200 OK status code.
   } catch (e) {
@@ -96,7 +96,6 @@ const updateById = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
-
 
 // Function to upload an image.
 const uploadImage = async (req, res, next) => {
