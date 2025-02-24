@@ -13,7 +13,16 @@ const findAll = async (req, res) => {
 // Save a new pet
 const save = async (req, res) => {
   try {
-    const { name, age, breed, description, availability, charge_per_hour, image } = req.body;
+    const {
+      name,
+      age,
+      breed,
+      description,
+      availability,
+      charge_per_hour,
+    } = req.body;
+
+    const image = req.file ? req.file.filename : null;
 
     const pet = new Pet({
       name,
@@ -22,7 +31,7 @@ const save = async (req, res) => {
       description,
       availability,
       charge_per_hour,
-      image // Here you expect the image name from the client
+      image, // Here you expect the image name from the client
     });
 
     await pet.save();
@@ -35,35 +44,51 @@ const save = async (req, res) => {
 // Fetch a pet by ID
 const findById = async (req, res) => {
   try {
-    const pets = await Pet.findById(req.params.id);
-    res.status(200).json(pets); // 200 OK
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid pet ID format" });
+    }
+    const pet = await Pet.findById(req.params.id);
+    if (!pet) {
+      return res.status(404).json({ error: "Pet not found" });
+    }
+    res.status(200).json(pet);
   } catch (e) {
-    res.status(500).json({ error: e.message }); // 500 Internal Server Error
+    res.status(500).json({ error: e.message });
   }
 };
 
 // Delete a pet by ID
 const deleteById = async (req, res) => {
   try {
-    await Pet.findByIdAndDelete(req.params.id);
-    res.status(200).json("Data deleted"); // 200 OK
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid pet ID format" });
+    }
+    const pet = await Pet.findByIdAndDelete(req.params.id);
+    if (!pet) {
+      return res.status(404).json({ error: "Pet not found" });
+    }
+    res.status(200).json({ message: "Pet deleted successfully" });
   } catch (e) {
-    res.status(500).json({ error: e.message }); // 500 Internal Server Error
+    res.status(500).json({ error: e.message });
   }
 };
-
 // Update a pet by ID
 const updateById = async (req, res) => {
   try {
-    const pets = await Pet.findByIdAndUpdate(req.params.id, req.body, {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "Invalid pet ID format" });
+    }
+    const updatedPet = await Pet.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    res.status(200).json(pets); // 200 OK
+    if (!updatedPet) {
+      return res.status(404).json({ error: "Pet not found" });
+    }
+    res.status(200).json(updatedPet);
   } catch (e) {
-    res.status(500).json({ error: e.message }); // 500 Internal Server Error
+    res.status(500).json({ error: e.message });
   }
 };
-
 // Function to upload an image.
 const uploadImage = async (req, res, next) => {
   if (!req.file) {

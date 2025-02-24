@@ -5,7 +5,7 @@ const path = require("path");
 // Storage configuration for customer uploads
 const customerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads/customers"); 
+    cb(null, path.join(__dirname, "../public/uploads/customers"));
   },
   filename: (req, file, cb) => {
     let ext = path.extname(file.originalname);
@@ -16,11 +16,11 @@ const customerStorage = multer.diskStorage({
 // Storage configuration for pet uploads
 const petStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads/pets"); 
+    cb(null, path.join(__dirname, "../public/uploads/pets"));
   },
   filename: (req, file, cb) => {
     let ext = path.extname(file.originalname);
-    cb(null, `IMG-${Date.now()}` + ext);
+    cb(null, `IMG-${Date.now()}${ext}`);
   },
 });
 
@@ -33,17 +33,17 @@ const imageFileFilter = (req, file, cb) => {
 };
 
 // Multer configuration for customer uploads
-const customerupload = multer({ 
+const customerupload = multer({
   storage: customerStorage,
   fileFilter: imageFileFilter,
   limits: { fileSize: maxSize },
 }).single("profilePicture");
 
 // Multer configuration for pet uploads
-const petupload = multer({ 
+const petupload = multer({
   storage: petStorage,
   fileFilter: imageFileFilter,
   limits: { fileSize: maxSize },
-}).single("image"); 
+}).single("image");
 
 module.exports = { customerupload, petupload };

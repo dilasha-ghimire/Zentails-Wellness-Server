@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = process.env.SECRET_KEY || "your-default-secret-key"; 
+const SECRET_KEY = process.env.SECRET_KEY || "your-default-secret-key";
 const Customer = require("../models/customerModel"); // Customer data (name, email, contact, address)
 const Credential = require("../models/credentials"); // Authentication data (email, password, role)
 
@@ -43,6 +43,7 @@ const register = async (req, res) => {
 
     // Create and save the Credential entry (for authentication)
     const newCredential = new Credential({
+      user_id: newCustomer._id,
       email: newCustomer.email,
       password: hashedPassword,
       role: "customer", // Default role, can be expanded later
@@ -60,11 +61,12 @@ const login = async (req, res) => {
   try {
     const { emailOrPhone, password } = req.body;
     let email = emailOrPhone;
+    let customer;
 
     // Check if input is a phone number
     if (!emailOrPhone.includes("@")) {
       // If it's not an email, assume it's a phone number and fetch the email
-      const customer = await Customer.findOne({ contact_number: emailOrPhone });
+      customer = await Customer.findOne({ contact_number: emailOrPhone });
       if (!customer) {
         return res.status(403).json({ error: "Invalid email or phone number" });
       }
@@ -72,7 +74,7 @@ const login = async (req, res) => {
     }
 
     // Find credentials using email
-    const cred = await Credential.findOne({ email });
+    const cred = await Credential.findOne({ email }).populate("user_id");
     if (!cred) {
       return res.status(403).json({ error: "Invalid email or password" });
     }
@@ -84,9 +86,11 @@ const login = async (req, res) => {
     }
 
     // Fetch customer details
-    const customer = await Customer.findOne({ email });
     if (!customer) {
-      return res.status(404).json({ error: "Customer details not found" });
+      customer = await Customer.findById(cred.user_id);
+      if (!customer) {
+        return res.status(404).json({ error: "Customer details not found" });
+      }
     }
 
     // Generate JWT token
