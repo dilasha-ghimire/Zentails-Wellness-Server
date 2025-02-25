@@ -100,7 +100,7 @@ const login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.json({ token, user: customer });
+    res.json({ token, role: cred.role, user: customer });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

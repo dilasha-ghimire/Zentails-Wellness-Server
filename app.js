@@ -1,3 +1,4 @@
+const cors = require("cors");
 // Import required libraries and modules
 const express = require("express");
 // Import the Express framework for creating a web server.
@@ -19,6 +20,16 @@ const app = express();
 
 // Connect to the MongoDB database by calling the database connection function.
 connectDB();
+app.use(cors());
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Allow requests only from this frontend
+    methods: "GET,POST,PUT,PATCH,DELETE", // Allowed HTTP methods
+    allowedHeaders: "Content-Type,Authorization", // Allowed headers
+    credentials: true, // Allow cookies (if needed)
+  })
+);
 
 // Middleware to parse incoming JSON request bodies.
 app.use(express.json());
