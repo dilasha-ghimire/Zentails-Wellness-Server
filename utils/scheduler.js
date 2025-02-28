@@ -1,6 +1,7 @@
 const TherapySession = require("../models/therapySessionModel");
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
+const cron = require("node-cron");
 
 // Connect to MongoDB
 connectDB();
@@ -9,35 +10,41 @@ connectDB();
 const updateExpiredTherapySessions = async () => {
   try {
     const now = new Date();
-    const currentHour = now.getHours();
 
     const expiredSessions = await TherapySession.find({
-      date: { $lt: now.toISOString().split("T")[0] }, // Sessions from past dates
-      status: { $ne: "complete" }, // Not already completed
+      $or: [
+        {
+          date: { $lt: now.toISOString().split("T")[0] },
+          status: { $ne: "complete" },
+        },
+        {
+          date: now.toISOString().split("T")[0],
+          end_time: { $lte: now.getHours() },
+          status: { $ne: "complete" },
+        },
+      ],
     });
 
-    const currentDaySessions = await TherapySession.find({
-      date: now.toISOString().split("T")[0], // Today's date
-      end_time: { $lte: currentHour }, // End time passed
-      status: { $ne: "complete" },
-    });
+    if (expiredSessions.length > 0) {
+      await TherapySession.updateMany(
+        { _id: { $in: expiredSessions.map((session) => session._id) } },
+        { $set: { status: "complete" } }
+      );
 
-    const sessionsToUpdate = [...expiredSessions, ...currentDaySessions];
-
-    for (let session of sessionsToUpdate) {
-      session.status = "complete";
-      await session.save();
+      console.log(
+        `${expiredSessions.length} therapy sessions marked as complete.`
+      );
     }
-
-    console.log(
-      `${sessionsToUpdate.length} therapy sessions marked as complete.`
-    );
   } catch (error) {
     console.error("Error updating therapy sessions:", error);
   }
 };
 
-// Run every hour
-setInterval(updateExpiredTherapySessions, 60 * 60 * 1000); // Every hour
+// ⏰ Schedule the task to run **every hour**
+cron.schedule("0 * * * *", async () => {
+  console.log("Running expired session updater...");
+  await updateExpiredTherapySessions();
+});
 
+// Export in case you need to trigger it manually
 module.exports = updateExpiredTherapySessions;

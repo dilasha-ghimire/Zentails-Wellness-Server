@@ -14,8 +14,11 @@ const getAllTherapySessions = async (req, res) => {
 // Get a single therapy session by ID
 const getTherapySessionById = async (req, res) => {
   try {
-    const session = await TherapySession.findById(req.params.id).populate("user_id pet_id");
-    if (!session) return res.status(404).json({ error: "Therapy session not found" });
+    const session = await TherapySession.findById(req.params.id).populate(
+      "user_id pet_id"
+    );
+    if (!session)
+      return res.status(404).json({ error: "Therapy session not found" });
     res.json(session);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -29,7 +32,9 @@ const createTherapySession = async (req, res) => {
 
     // Ensure time difference is in hourly intervals
     if ((end_time - start_time) % 1 !== 0) {
-      return res.status(400).json({ error: "Start and end time must have an hourly difference" });
+      return res
+        .status(400)
+        .json({ error: "Start and end time must have an hourly difference" });
     }
 
     const pet = await Pet.findById(pet_id);
@@ -37,6 +42,22 @@ const createTherapySession = async (req, res) => {
 
     if (!pet.availability) {
       return res.status(400).json({ error: "Pet is already booked" });
+    }
+
+    const existingSession = await TherapySession.findOne({
+      pet_id,
+      status: { $ne: "complete" }, // Ignore completed sessions
+      date,
+      $or: [
+        { start_time: { $lt: end_time, $gte: start_time } }, // Overlapping start
+        { end_time: { $gt: start_time, $lte: end_time } }, // Overlapping end
+      ],
+    });
+
+    if (existingSession) {
+      return res
+        .status(400)
+        .json({ error: "Pet is already booked for this time" });
     }
 
     const session = new TherapySession({
@@ -49,6 +70,8 @@ const createTherapySession = async (req, res) => {
     });
 
     await session.save();
+    pet.availability = false;
+    await pet.save();
     res.status(201).json(session);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -58,12 +81,31 @@ const createTherapySession = async (req, res) => {
 // Update an existing therapy session
 const updateTherapySession = async (req, res) => {
   try {
-    const updatedSession = await TherapySession.findByIdAndUpdate(req.params.id, req.body, { new: true });
-
-    if (!updatedSession) {
+    const existingSession = await TherapySession.findById(req.params.id);
+    if (!existingSession) {
       return res.status(404).json({ error: "Therapy session not found" });
     }
 
+    const now = new Date();
+    const sessionDate = new Date(existingSession.date);
+    const currentHour = now.getHours();
+
+    // Prevent changes if the session has started
+    if (
+      sessionDate.toISOString().split("T")[0] ===
+        now.toISOString().split("T")[0] &&
+      existingSession.start_time <= currentHour
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Cannot modify an ongoing or completed session" });
+    }
+
+    const updatedSession = await TherapySession.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     res.json(updatedSession);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -74,7 +116,8 @@ const updateTherapySession = async (req, res) => {
 const deleteTherapySession = async (req, res) => {
   try {
     const session = await TherapySession.findByIdAndDelete(req.params.id);
-    if (!session) return res.status(404).json({ error: "Therapy session not found" });
+    if (!session)
+      return res.status(404).json({ error: "Therapy session not found" });
 
     // Make pet available again
     const pet = await Pet.findById(session.pet_id);
@@ -89,9 +132,30 @@ const deleteTherapySession = async (req, res) => {
   }
 };
 
+// Get therapy sessions by user ID
+const getTherapySessionsByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find all therapy sessions associated with the given user ID
+    const sessions = await TherapySession.find({ user_id: userId })
+      .populate("user_id pet_id")
+      .sort({ date: -1, start_time: 1 }); // Sort by latest date, then by start time
+
+    if (sessions.length === 0) {
+      return res.status(404).json({ error: "No therapy sessions found for this user" });
+    }
+
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   getAllTherapySessions,
   getTherapySessionById,
+  getTherapySessionsByUserId,
   createTherapySession,
   updateTherapySession,
   deleteTherapySession,
