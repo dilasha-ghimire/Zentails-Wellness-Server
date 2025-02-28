@@ -14,43 +14,65 @@ const HealthRecordRouter = require("./routes/healthRecordRoute");
 const MedicalHistoryRouter = require("./routes/medicalHistoryRoute");
 const VaccinationRouter = require("./routes/vaccinationRoute");
 const SpecialNeedsRouter = require("./routes/specialNeedsRoute");
+const TherapySessionRouter = require("./routes/therapySessionRoute");
+
+// Import the scheduler function to update therapy session status automatically
+const updateExpiredTherapySessions = require("./utils/scheduler");
 
 // Create an instance of the Express application.
 const app = express();
 
-// Connect to the MongoDB database by calling the database connection function.
-connectDB();
-app.use(cors());
+// Function to start the server after ensuring the database connection is established
+const startServer = async () => {
+  try {
+    // Connect to the MongoDB database and wait for it to establish a connection
+    await connectDB();
 
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Allow requests only from this frontend
-    methods: "GET,POST,PUT,PATCH,DELETE", // Allowed HTTP methods
-    allowedHeaders: "Content-Type,Authorization", // Allowed headers
-    credentials: true, // Allow cookies (if needed)
-  })
-);
+    // Start the scheduler AFTER the database connection is established
+    updateExpiredTherapySessions();
 
-// Middleware to parse incoming JSON request bodies.
-app.use(express.json());
+    // Enable CORS (Cross-Origin Resource Sharing)
+    app.use(cors());
 
-// Serve static files from the "public/uploads/customers" directory
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+    app.use(
+      cors({
+        origin: "http://localhost:5173", // Allow requests only from this frontend
+        methods: "GET,POST,PUT,PATCH,DELETE", // Allowed HTTP methods
+        allowedHeaders: "Content-Type,Authorization", // Allowed headers
+        credentials: true, // Allow cookies (if needed)
+      })
+    );
 
-// Mount the routes at the endpoints.
-app.use("/api/customer", CustomerRouter);
-app.use("/api/pet", PetRouter);
-app.use("/api/auth", AuthRouter);
-app.use("/api/health-record", HealthRecordRouter);
-app.use("/api/medical-history", MedicalHistoryRouter);
-app.use("/api/vaccination", VaccinationRouter);
-app.use("/api/special-needs", SpecialNeedsRouter);
+    // Middleware to parse incoming JSON request bodies.
+    app.use(express.json());
 
-// Define the port number the server will listen on.
-const port = 3000;
+    // Serve static files from the "public/uploads/customers" directory
+    app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// Start the server and listen on the specified port.
-app.listen(port, () => {
-  // Log a message when the server starts successfully.
-  console.log(`Server is running at http://localhost:${port}`);
-});
+    // Mount the routes at the endpoints.
+    app.use("/api/customer", CustomerRouter);
+    app.use("/api/pet", PetRouter);
+    app.use("/api/auth", AuthRouter);
+    app.use("/api/health-record", HealthRecordRouter);
+    app.use("/api/medical-history", MedicalHistoryRouter);
+    app.use("/api/vaccination", VaccinationRouter);
+    app.use("/api/special-needs", SpecialNeedsRouter);
+    app.use("/api/therapysessions", TherapySessionRouter);
+
+    // Define the port number the server will listen on.
+    const port = 3000;
+
+    // Start the server and listen on the specified port.
+    app.listen(port, () => {
+      // Log a message when the server starts successfully.
+      console.log(`Server is running at http://localhost:${port}`);
+    });
+  } catch (error) {
+    // Log an error message and exit the process if server startup fails
+    console.error("Error starting server:", error);
+    process.exit(1); // Exit if there's a critical error
+  }
+};
+
+// Start the server by calling the function
+startServer();
