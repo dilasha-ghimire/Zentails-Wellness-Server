@@ -1,4 +1,5 @@
 const TherapySession = require("../models/therapySessionModel");
+const Customer = require("../models/customerModel");
 const Pet = require("../models/petModel");
 const sendEmail = require("../utils/emailService");
 
@@ -31,8 +32,14 @@ const createTherapySession = async (req, res) => {
   try {
     const { date, start_time, end_time, status, user_id, pet_id } = req.body;
 
+    // Convert HHMM format to minutes
+    const toMinutes = (time) => Math.floor(time / 100) * 60 + (time % 100);
+
     // Ensure time difference is in hourly intervals
-    if ((end_time - start_time) % 1 !== 0) {
+    const startMinutes = toMinutes(start_time);
+    const endMinutes = toMinutes(end_time);
+
+    if (endMinutes <= startMinutes || (endMinutes - startMinutes) % 60 !== 0) {
       return res
         .status(400)
         .json({ error: "Start and end time must have an hourly difference" });
@@ -52,6 +59,7 @@ const createTherapySession = async (req, res) => {
       $or: [
         { start_time: { $lt: end_time, $gte: start_time } }, // Overlapping start
         { end_time: { $gt: start_time, $lte: end_time } }, // Overlapping end
+        { start_time: { $lte: start_time }, end_time: { $gte: end_time } }, // Fully contains new session
       ],
     });
 
@@ -62,7 +70,7 @@ const createTherapySession = async (req, res) => {
     }
 
     // Calculate duration and total charge
-    const duration = end_time - start_time; // Hours
+    const duration = (endMinutes - startMinutes) / 60; // Hours
     const total_charge = duration * pet.charge_per_hour;
 
     const session = new TherapySession({
@@ -86,33 +94,52 @@ const createTherapySession = async (req, res) => {
       return res.status(404).json({ error: "Customer not found" });
     }
 
+    // Convert start_time and end_time to HH:MM AM/PM format
+    const formatTime = (time) => {
+      const hours = Math.floor(time / 100);
+      const minutes = time % 100;
+      const period = hours >= 12 ? "PM" : "AM";
+      const formattedHours = hours % 12 === 0 ? 12 : hours % 12; // Convert 0/12 to 12
+      const formattedMinutes = minutes.toString().padStart(2, "0"); // Ensure two digits
+      return `${formattedHours}:${formattedMinutes} ${period}`;
+    };
+
+    const formattedStartTime = formatTime(start_time);
+    const formattedEndTime = formatTime(end_time);
+
     // Email content
     const subject = "Your Therapy Session is Confirmed! 🐾";
     const text = `
       Dear ${customer.full_name},
 
-      Your therapy session is scheduled as follows:
-      - Date: ${new Date(date).toDateString()}
-      - Start Time: ${start_time}:00
-      - End Time: ${end_time}:00
-      - Duration: ${duration} hour(s)
-      - Total Charge: $${total_charge}
+      Your therapy session is confirmed. Here are the details:
+      - 🐾 Pet Name: ${pet.name}
+      - 🐾 Pet Breed: ${pet.breed}
+      - 🐾 Pet Description: ${pet.description || "No description provided"}
+      - 📅 Date: ${new Date(date).toDateString()}
+      - ⏰ Time: ${formattedStartTime} - ${formattedEndTime}
+      - ⏳ Duration: ${duration} hour(s)
+      - 💰 Total Charge: Rs.${total_charge}
 
-      Thank you for choosing our service!
-    `;
+      Thank you for choosing our service! 🐶🐾
+      `;
 
     const html = `
-      <h2>Dear ${customer.full_name},</h2>
-      <p>Your therapy session is scheduled for:</p>
-      <ul>
-        <li><strong>Date:</strong> ${new Date(date).toDateString()}</li>
-        <li><strong>Start Time:</strong> ${start_time}:00</li>
-        <li><strong>End Time:</strong> ${end_time}:00</li>
-        <li><strong>Duration:</strong> ${duration} hour(s)</li>
-        <li><strong>Total Charge:</strong> $${total_charge}</li>
-      </ul>
-      <p>Thank you for choosing us!</p>
-    `;
+        <h2>Dear ${customer.full_name},</h2>
+        <p>Your therapy session is confirmed. Here are the details:</p>
+        <ul>
+          <li><strong>🐾 Pet Name:</strong> ${pet.name}</li>
+          <li><strong>🐾 Pet Breed:</strong> ${pet.breed}</li>
+          <li><strong>🐾 Pet Description:</strong> ${
+            pet.description || "No description provided"
+          }</li>
+          <li><strong>📅 Date:</strong> ${new Date(date).toDateString()}</li>
+          <li><strong>⏰ Time:</strong> ${formattedStartTime} - ${formattedEndTime}</li>
+          <li><strong>⏳ Duration:</strong> ${duration} hour(s)</li>
+          <li><strong>💰 Total Charge:</strong> Rs.${total_charge}</li>
+        </ul>
+        <p>Thank you for choosing our service! 🐶🐾</p>
+      `;
 
     // Send email
     await sendEmail(customer.email, subject, text, html);
@@ -120,40 +147,6 @@ const createTherapySession = async (req, res) => {
     res
       .status(201)
       .json({ message: "Therapy session booked and email sent", session });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// Update an existing therapy session
-const updateTherapySession = async (req, res) => {
-  try {
-    const existingSession = await TherapySession.findById(req.params.id);
-    if (!existingSession) {
-      return res.status(404).json({ error: "Therapy session not found" });
-    }
-
-    const now = new Date();
-    const sessionDate = new Date(existingSession.date);
-    const currentHour = now.getHours();
-
-    // Prevent changes if the session has started
-    if (
-      sessionDate.toISOString().split("T")[0] ===
-        now.toISOString().split("T")[0] &&
-      existingSession.start_time <= currentHour
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Cannot modify an ongoing or completed session" });
-    }
-
-    const updatedSession = await TherapySession.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(updatedSession);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -206,6 +199,5 @@ module.exports = {
   getTherapySessionById,
   getTherapySessionsByUserId,
   createTherapySession,
-  updateTherapySession,
   deleteTherapySession,
 };

@@ -41,7 +41,15 @@ therapySessionSchema.pre("save", async function (next) {
   const Pet = mongoose.model("pets");
 
   if (this.start_time && this.end_time) {
-    this.duration = this.end_time - this.start_time;
+    const startHours = Math.floor(this.start_time / 100);
+    const startMinutes = this.start_time % 100;
+    const endHours = Math.floor(this.end_time / 100);
+    const endMinutes = this.end_time % 100;
+
+    const startTotalMinutes = startHours * 60 + startMinutes;
+    const endTotalMinutes = endHours * 60 + endMinutes;
+
+    this.duration = (endTotalMinutes - startTotalMinutes) / 60;
   }
 
   const pet = await Pet.findById(this.pet_id);
