@@ -26,7 +26,7 @@ router.post("/", authenticateToken, CustomerValidation, save);
 // HTTP POST request to "/" triggers the `save` function to create a new customer record.
 
 // Define a route to fetch a customer by ID.
-router.get("/:id", findById);
+router.get("/:id", authenticateToken, findById);
 // HTTP GET request to "/:id" triggers the `findById` function to fetch a customer by their ID.
 
 // Define a route to delete a customer by ID.

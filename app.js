@@ -16,8 +16,8 @@ const VaccinationRouter = require("./routes/vaccinationRoute");
 const SpecialNeedsRouter = require("./routes/specialNeedsRoute");
 const TherapySessionRouter = require("./routes/therapySessionRoute");
 
-// Import the scheduler function to update therapy session status automatically
-const updateExpiredTherapySessions = require("./utils/scheduler");
+// Import the scheduler to run in the background
+require("./utils/scheduler");
 
 // Create an instance of the Express application.
 const app = express();
@@ -27,9 +27,6 @@ const startServer = async () => {
   try {
     // Connect to the MongoDB database and wait for it to establish a connection
     await connectDB();
-
-    // Start the scheduler AFTER the database connection is established
-    updateExpiredTherapySessions();
 
     // Enable CORS (Cross-Origin Resource Sharing)
     app.use(cors());
