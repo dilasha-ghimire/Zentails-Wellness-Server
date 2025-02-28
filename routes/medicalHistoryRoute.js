@@ -5,13 +5,34 @@ const {
   getMedicalHistoryById,
   createMedicalHistory,
   updateMedicalHistory,
-  deleteMedicalHistory
+  deleteMedicalHistory,
 } = require("../controllers/medicalHistoryController");
+const { authenticateToken, authorizeRole } = require("../security/auth");
 
-router.get("/", getAllMedicalHistories);
-router.get("/:id", getMedicalHistoryById);
-router.post("/", createMedicalHistory);
-router.put("/:id", updateMedicalHistory);
-router.delete("/:id", deleteMedicalHistory);
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  getAllMedicalHistories
+);
+router.get("/:id", authenticateToken, getMedicalHistoryById);
+router.post(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  createMedicalHistory
+);
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  updateMedicalHistory
+);
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  deleteMedicalHistory
+);
 
 module.exports = router;

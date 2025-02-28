@@ -5,13 +5,34 @@ const {
   getHealthRecordById,
   createHealthRecord,
   updateHealthRecord,
-  deleteHealthRecord
+  deleteHealthRecord,
 } = require("../controllers/healthRecordController");
+const { authenticateToken, authorizeRole } = require("../security/auth");
 
-router.get("/", getAllHealthRecords);
-router.get("/:id", getHealthRecordById);
-router.post("/", createHealthRecord);
-router.put("/:id", updateHealthRecord);
-router.delete("/:id", deleteHealthRecord);
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  getAllHealthRecords
+);
+router.get("/:id", authenticateToken, getHealthRecordById);
+router.post(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  createHealthRecord
+);
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  updateHealthRecord
+);
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  deleteHealthRecord
+);
 
 module.exports = router;

@@ -5,13 +5,34 @@ const {
   getSpecialNeedsById,
   createSpecialNeeds,
   updateSpecialNeeds,
-  deleteSpecialNeeds
+  deleteSpecialNeeds,
 } = require("../controllers/specialNeedsController");
+const { authenticateToken, authorizeRole } = require("../security/auth");
 
-router.get("/", getAllSpecialNeeds);
-router.get("/:id", getSpecialNeedsById);
-router.post("/", createSpecialNeeds);
-router.put("/:id", updateSpecialNeeds);
-router.delete("/:id", deleteSpecialNeeds);
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  getAllSpecialNeeds
+);
+router.get("/:id", authenticateToken, getSpecialNeedsById);
+router.post(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  createSpecialNeeds
+);
+router.put(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  updateSpecialNeeds
+);
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  deleteSpecialNeeds
+);
 
 module.exports = router;

@@ -13,15 +13,25 @@ const {
 } = require("../controllers/petController");
 
 // Define routes for pets
-router.get("/", findAll); // Fetch all pets
-router.post("/", petupload, save);
+router.get(
+  "/",
+  authenticateToken,
+  authorizeRole(["admin", "customer"]),
+  findAll
+); // Fetch all pets
+router.post("/", authenticateToken, authorizeRole(["admin"]), petupload, save);
 // Add a new pet
-router.get("/:id", findById); // Fetch a pet by ID
+router.get(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin", "customer"]),
+  findById
+); // Fetch a pet by ID
 router.delete("/:id", authenticateToken, authorizeRole(["admin"]), deleteById);
 // Delete a pet by ID
 router.put("/:id", authenticateToken, authorizeRole(["admin"]), updateById);
 // Update a pet by ID
-router.post("/uploadImage", petupload, (req, res) => {
+router.post("/uploadImage", authenticateToken, petupload, (req, res) => {
   uploadImage(req, res).catch((err) => {
     res
       .status(500)
