@@ -1,6 +1,7 @@
 // Import the Customer model to interact with the "customers" collection in MongoDB.
 const Customer = require("../models/customerModel");
-
+const fs = require("fs");
+const path = require("path");
 // Import the Credential model
 const Credential = require("../models/credentials");
 
@@ -109,6 +110,57 @@ const uploadImage = async (req, res, next) => {
   });
 };
 
+//upload customer with image
+const updateWithImageById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, email, contact_number, address, profilePicture } =
+      req.body;
+
+    // Find existing customer
+    let customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    // If a new profile picture is uploaded, process it
+    let updatedProfilePicture = customer.profilePicture; // Default to existing picture
+    if (req.file) {
+      // A new file was uploaded, replace the old one
+      if (customer.profilePicture) {
+        const oldImagePath = path.join(
+          __dirname,
+          "../public/uploads/customers",
+          customer.profilePicture
+        );
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath); // Delete the old image
+        }
+      }
+      updatedProfilePicture = req.file.filename; // Set new filename
+    }
+
+    // Update customer details
+    customer.full_name = full_name || customer.full_name;
+    customer.email = email || customer.email;
+    customer.contact_number = contact_number || customer.contact_number;
+    customer.address = address || customer.address;
+    customer.profilePicture = updatedProfilePicture;
+
+    // Save the updated customer
+    await customer.save();
+
+    res
+      .status(200)
+      .json({ message: "Customer updated successfully", customer });
+  } catch (error) {
+    console.error("Error updating customer:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
 // Export all the functions so they can be used in other parts of the application.
 module.exports = {
   findAll,
@@ -117,4 +169,5 @@ module.exports = {
   deleteById,
   updateById,
   uploadImage,
+  updateWithImageById,
 };

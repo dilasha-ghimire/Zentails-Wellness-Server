@@ -1,5 +1,6 @@
 const TherapySession = require("../models/therapySessionModel");
 const Pet = require("../models/petModel");
+const sendEmail = require("../utils/emailService");
 
 // Get all therapy sessions
 const getAllTherapySessions = async (req, res) => {
@@ -60,10 +61,16 @@ const createTherapySession = async (req, res) => {
         .json({ error: "Pet is already booked for this time" });
     }
 
+    // Calculate duration and total charge
+    const duration = end_time - start_time; // Hours
+    const total_charge = duration * pet.charge_per_hour;
+
     const session = new TherapySession({
       date,
       start_time,
       end_time,
+      duration,
+      total_charge,
       status,
       user_id,
       pet_id,
@@ -72,7 +79,47 @@ const createTherapySession = async (req, res) => {
     await session.save();
     pet.availability = false;
     await pet.save();
-    res.status(201).json(session);
+
+    // Fetch customer details
+    const customer = await Customer.findById(user_id);
+    if (!customer) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    // Email content
+    const subject = "Your Therapy Session is Confirmed! 🐾";
+    const text = `
+      Dear ${customer.full_name},
+
+      Your therapy session is scheduled as follows:
+      - Date: ${new Date(date).toDateString()}
+      - Start Time: ${start_time}:00
+      - End Time: ${end_time}:00
+      - Duration: ${duration} hour(s)
+      - Total Charge: $${total_charge}
+
+      Thank you for choosing our service!
+    `;
+
+    const html = `
+      <h2>Dear ${customer.full_name},</h2>
+      <p>Your therapy session is scheduled for:</p>
+      <ul>
+        <li><strong>Date:</strong> ${new Date(date).toDateString()}</li>
+        <li><strong>Start Time:</strong> ${start_time}:00</li>
+        <li><strong>End Time:</strong> ${end_time}:00</li>
+        <li><strong>Duration:</strong> ${duration} hour(s)</li>
+        <li><strong>Total Charge:</strong> $${total_charge}</li>
+      </ul>
+      <p>Thank you for choosing us!</p>
+    `;
+
+    // Send email
+    await sendEmail(customer.email, subject, text, html);
+
+    res
+      .status(201)
+      .json({ message: "Therapy session booked and email sent", session });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -143,7 +190,9 @@ const getTherapySessionsByUserId = async (req, res) => {
       .sort({ date: -1, start_time: 1 }); // Sort by latest date, then by start time
 
     if (sessions.length === 0) {
-      return res.status(404).json({ error: "No therapy sessions found for this user" });
+      return res
+        .status(404)
+        .json({ error: "No therapy sessions found for this user" });
     }
 
     res.json(sessions);

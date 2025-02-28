@@ -12,6 +12,7 @@ const {
   deleteById,
   updateById,
   uploadImage,
+  updateWithImageById,
 } = require("../controllers/customerController");
 
 const CustomerValidation = require("../validation/customerValidation");
@@ -25,7 +26,7 @@ router.post("/", authenticateToken, CustomerValidation, save);
 // HTTP POST request to "/" triggers the `save` function to create a new customer record.
 
 // Define a route to fetch a customer by ID.
-router.get("/:id", authenticateToken, findById);
+router.get("/:id", findById);
 // HTTP GET request to "/:id" triggers the `findById` function to fetch a customer by their ID.
 
 // Define a route to delete a customer by ID.
@@ -43,6 +44,8 @@ router.post("/uploadImage", authenticateToken, customerupload, (req, res) => {
       .send("An error occurred during file upload: " + err.message);
   });
 });
+
+router.put("/updateWithImage/:id", customerupload, updateWithImageById);
 
 module.exports = router;
 // Export the router so it can be used in other parts of the application.
