@@ -13,6 +13,7 @@ const {
   updateById,
   uploadImage,
   updateWithImageById,
+  deactivateUser,
 } = require("../controllers/customerController");
 
 const CustomerValidation = require("../validation/customerValidation");
@@ -47,5 +48,11 @@ router.post("/uploadImage", authenticateToken, customerupload, (req, res) => {
 
 router.put("/updateWithImage/:id", customerupload, updateWithImageById);
 
+router.patch(
+  "/:id/deactivate",
+  authenticateToken,
+  authorizeRole(["admin"]),
+  deactivateUser
+);
 module.exports = router;
 // Export the router so it can be used in other parts of the application.

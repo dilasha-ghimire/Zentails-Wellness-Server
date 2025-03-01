@@ -29,6 +29,11 @@ const customerSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  active: {
+    type: Boolean,
+    required: false,
+    default: true,
+  },
 });
 
 // Create a model from the schema and name the collection "customers".

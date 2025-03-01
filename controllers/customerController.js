@@ -161,6 +161,29 @@ const updateWithImageById = async (req, res) => {
   }
 };
 
+const deactivateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Find the user and update the 'active' status to false
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { active: false },
+      { new: true }
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "User not found" });
+    }
+
+    res.status(200).json({ status: "success", data: { user } });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: "Something went wrong" });
+  }
+};
+
 // Export all the functions so they can be used in other parts of the application.
 module.exports = {
   findAll,
@@ -170,4 +193,5 @@ module.exports = {
   updateById,
   uploadImage,
   updateWithImageById,
+  deactivateUser,
 };
