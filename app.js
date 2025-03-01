@@ -51,6 +51,11 @@ const startServer = async () => {
       express.static(path.join(__dirname, "public/uploads/customers"))
     );
 
+    app.use(
+      "/uploadsPets",
+      express.static(path.join(__dirname, "public/uploads/pets"))
+    );
+
     // Mount the routes at the endpoints.
     app.use("/api/customer", CustomerRouter);
     app.use("/api/pet", PetRouter);
