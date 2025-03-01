@@ -165,20 +165,19 @@ const deactivateUser = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    // Find the user and update the 'active' status to false
-    const user = await User.findByIdAndUpdate(
+    const customer = await Customer.findByIdAndUpdate(
       userId,
       { active: false },
       { new: true }
     );
 
-    if (!user) {
+    if (!customer) {
       return res
         .status(404)
-        .json({ status: "fail", message: "User not found" });
+        .json({ status: "fail", message: "Customer not found" });
     }
 
-    res.status(200).json({ status: "success", data: { user } });
+    res.status(200).json({ status: "success", data: { customer } });
   } catch (err) {
     res.status(500).json({ status: "error", message: "Something went wrong" });
   }
