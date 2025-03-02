@@ -33,7 +33,7 @@ const startServer = async () => {
 
     app.use(
       cors({
-        origin: "http://localhost:5174", // Allow requests only from this frontend
+        origin: "http://localhost:5173", // Allow requests only from this frontend
         methods: "GET,POST,PUT,PATCH,DELETE", // Allowed HTTP methods
         allowedHeaders: "Content-Type,Authorization", // Allowed headers
         credentials: true, // Allow cookies (if needed)
