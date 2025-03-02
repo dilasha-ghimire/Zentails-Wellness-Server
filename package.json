@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon app.js",
-    "test": "mocha --timeout 10000"
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",
@@ -27,7 +27,9 @@
   "devDependencies": {
     "chai": "^5.2.0",
     "chai-http": "^5.1.1",
+    "jest": "^29.7.0",
     "mocha": "^11.1.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "mongodb-memory-server": "^8.0.0"
   }
 }
